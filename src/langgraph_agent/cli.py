@@ -10,7 +10,12 @@ from langgraph_agent.state import AgentState
 
 def run(question: str) -> AgentState:
     """Invoke the compiled graph for a single question and return the final state."""
-    initial: AgentState = {"question": question, "steps": [], "answer": ""}
+    initial: AgentState = {
+        "question": question,
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+    }
     result: AgentState = build_graph().invoke(initial)
     return result
 

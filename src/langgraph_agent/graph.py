@@ -11,6 +11,7 @@ from typing import Any
 from langgraph.graph import END, START, StateGraph
 
 from langgraph_agent.state import AgentState
+from langgraph_agent.tools import count_words
 
 
 def plan(state: AgentState) -> dict[str, list[str]]:
@@ -23,6 +24,16 @@ def act(state: AgentState) -> dict[str, list[str]]:
     return {"steps": [*state["steps"], "act: gather what is needed"]}
 
 
+def execute_tool(state: AgentState) -> dict[str, list[str]]:
+    """Execute a tool (count words in the question)."""
+    word_count = count_words(state["question"])
+    result = f"tool: count_words returned {word_count}"
+    return {
+        "steps": [*state["steps"], result],
+        "tool_results": [*state["tool_results"], result],
+    }
+
+
 def respond(state: AgentState) -> dict[str, str]:
     """Produce a final answer from the accumulated steps."""
     return {"answer": f"Handled {state['question']!r} in {len(state['steps'])} steps."}
@@ -33,9 +44,11 @@ def build_graph() -> Any:
     graph = StateGraph(AgentState)
     graph.add_node("plan", plan)
     graph.add_node("act", act)
+    graph.add_node("execute_tool", execute_tool)
     graph.add_node("respond", respond)
     graph.add_edge(START, "plan")
     graph.add_edge("plan", "act")
-    graph.add_edge("act", "respond")
+    graph.add_edge("act", "execute_tool")
+    graph.add_edge("execute_tool", "respond")
     graph.add_edge("respond", END)
     return graph.compile()

@@ -11,3 +11,4 @@ class AgentState(TypedDict):
     question: str
     steps: list[str]
     answer: str
+    tool_results: list[str]
