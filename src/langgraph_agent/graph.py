@@ -1,12 +1,12 @@
 """A minimal LangGraph agent graph (a deterministic foundation).
 
-Structure: plan -> act -> respond. Each node returns a partial state update.
-LLM-backed nodes, tools and conditional routing are layered on top of this.
+Structure: plan -> act -> router -> (tool | respond). Each node returns a partial state update.
+Conditional routing chooses between executing tools or responding based on question length.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from langgraph.graph import END, START, StateGraph
 
@@ -22,6 +22,13 @@ def plan(state: AgentState) -> dict[str, list[str]]:
 def act(state: AgentState) -> dict[str, list[str]]:
     """Record an action step."""
     return {"steps": [*state["steps"], "act: gather what is needed"]}
+
+
+def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
+    """Route to tool execution or responding based on question complexity."""
+    if len(state["question"]) > 10:
+        return "execute_tool"
+    return "respond"
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
@@ -48,7 +55,11 @@ def build_graph() -> Any:
     graph.add_node("respond", respond)
     graph.add_edge(START, "plan")
     graph.add_edge("plan", "act")
-    graph.add_edge("act", "execute_tool")
+    graph.add_conditional_edges(
+        "act",
+        _should_use_tool,
+        {"execute_tool": "execute_tool", "respond": "respond"},
+    )
     graph.add_edge("execute_tool", "respond")
     graph.add_edge("respond", END)
     return graph.compile()
