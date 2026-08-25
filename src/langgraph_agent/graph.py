@@ -10,13 +10,15 @@ from typing import Any, Literal
 
 from langgraph.graph import END, START, StateGraph
 
+from langgraph_agent.llm import FakeLLM, LLMBase
 from langgraph_agent.state import AgentState
 from langgraph_agent.tools import count_words
 
 
-def plan(state: AgentState) -> dict[str, list[str]]:
-    """Record a planning step."""
-    return {"steps": [*state["steps"], f"plan: understand {state['question']!r}"]}
+def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
+    """Record a planning step using the LLM."""
+    plan_text = llm.generate(f"Plan for: {state['question']}")
+    return {"steps": [*state["steps"], f"plan: {plan_text}"]}
 
 
 def act(state: AgentState) -> dict[str, list[str]]:
@@ -46,10 +48,20 @@ def respond(state: AgentState) -> dict[str, str]:
     return {"answer": f"Handled {state['question']!r} in {len(state['steps'])} steps."}
 
 
-def build_graph() -> Any:
-    """Build and compile the agent graph."""
+def build_graph(llm: LLMBase | None = None) -> Any:
+    """Build and compile the agent graph.
+
+    Args:
+        llm: Language model instance. Uses FakeLLM if not provided.
+    """
+    if llm is None:
+        llm = FakeLLM()
+
+    def plan_node(state: AgentState) -> dict[str, list[str]]:
+        return plan(state, llm)
+
     graph = StateGraph(AgentState)
-    graph.add_node("plan", plan)
+    graph.add_node("plan", plan_node)
     graph.add_node("act", act)
     graph.add_node("execute_tool", execute_tool)
     graph.add_node("respond", respond)
