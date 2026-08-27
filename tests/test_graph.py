@@ -3,6 +3,7 @@
 from langgraph_agent.graph import build_graph
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
+from langgraph_agent.tools import select_tool
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
@@ -46,3 +47,28 @@ def test_graph_uses_fake_llm() -> None:
 
     assert any("Strategic plan" in step for step in result["steps"])
     assert result["answer"]
+
+
+def test_tool_selection_for_length_query() -> None:
+    assert select_tool("what is the length of this") == "get_length"
+
+
+def test_tool_selection_for_uppercase_query() -> None:
+    assert select_tool("can you make this upper") == "uppercase"
+
+
+def test_tool_selection_defaults_to_count_words() -> None:
+    assert select_tool("how many words here") == "count_words"
+
+
+def test_graph_uses_selected_tool() -> None:
+    initial: AgentState = {
+        "question": "what is the length of this sentence",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert any("get_length" in step for step in result["steps"])
+    assert len(result["tool_results"]) == 1

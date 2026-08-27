@@ -12,7 +12,7 @@ from langgraph.graph import END, START, StateGraph
 
 from langgraph_agent.llm import FakeLLM, LLMBase
 from langgraph_agent.state import AgentState
-from langgraph_agent.tools import count_words
+from langgraph_agent.tools import TOOLS_REGISTRY, register_tools, select_tool
 
 
 def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
@@ -34,9 +34,11 @@ def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Execute a tool (count words in the question)."""
-    word_count = count_words(state["question"])
-    result = f"tool: count_words returned {word_count}"
+    """Execute selected tool based on the question."""
+    tool_name = select_tool(state["question"])
+    tool = TOOLS_REGISTRY[tool_name]
+    tool_output = tool(state["question"])
+    result = f"tool: {tool_name} returned {tool_output}"
     return {
         "steps": [*state["steps"], result],
         "tool_results": [*state["tool_results"], result],
@@ -56,6 +58,8 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     """
     if llm is None:
         llm = FakeLLM()
+
+    register_tools()
 
     def plan_node(state: AgentState) -> dict[str, list[str]]:
         return plan(state, llm)
