@@ -36,3 +36,21 @@ def select_tool(question: str) -> str:
     if "upper" in question.lower():
         return "uppercase"
     return "count_words"
+
+
+def select_tools(question: str) -> list[str]:
+    """Select multiple tools that might be needed for the question.
+
+    Returns a list of tool names to execute in sequence.
+    """
+    tools: list[str] = []
+    lower_q = question.lower()
+
+    if "length" in lower_q:
+        tools.append("get_length")
+    if "upper" in lower_q or "uppercase" in lower_q:
+        tools.append("uppercase")
+    if "word" in lower_q or "count" in lower_q:
+        tools.append("count_words")
+
+    return tools if tools else ["count_words"]

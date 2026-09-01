@@ -3,7 +3,7 @@
 from langgraph_agent.graph import build_graph
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
-from langgraph_agent.tools import select_tool
+from langgraph_agent.tools import select_tool, select_tools
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
@@ -72,3 +72,29 @@ def test_graph_uses_selected_tool() -> None:
 
     assert any("get_length" in step for step in result["steps"])
     assert len(result["tool_results"]) == 1
+
+
+def test_select_tools_returns_multiple_tools() -> None:
+    tools = select_tools("what is the length and uppercase version")
+    assert "get_length" in tools
+    assert "uppercase" in tools
+
+
+def test_select_tools_defaults_to_count_words() -> None:
+    tools = select_tools("random question")
+    assert "count_words" in tools
+
+
+def test_graph_executes_multiple_tools() -> None:
+    initial: AgentState = {
+        "question": "what is the length and can you uppercase this",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert any("get_length" in step for step in result["steps"])
+    assert any("uppercase" in step for step in result["steps"])
+    assert len(result["tool_results"]) >= 2
+    assert result["answer"]
