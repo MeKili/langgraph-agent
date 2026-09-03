@@ -15,6 +15,7 @@ def run(question: str) -> AgentState:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result: AgentState = build_graph().invoke(initial)
     return result

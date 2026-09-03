@@ -12,6 +12,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result = build_graph().invoke(initial)
 
@@ -27,6 +28,7 @@ def test_graph_routes_to_respond_for_short_question() -> None:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result = build_graph().invoke(initial)
 
@@ -42,6 +44,7 @@ def test_graph_uses_fake_llm() -> None:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result = build_graph(llm).invoke(initial)
 
@@ -67,6 +70,7 @@ def test_graph_uses_selected_tool() -> None:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result = build_graph().invoke(initial)
 
@@ -91,10 +95,30 @@ def test_graph_executes_multiple_tools() -> None:
         "steps": [],
         "answer": "",
         "tool_results": [],
+        "history": [],
     }
     result = build_graph().invoke(initial)
 
     assert any("get_length" in step for step in result["steps"])
     assert any("uppercase" in step for step in result["steps"])
     assert len(result["tool_results"]) >= 2
+    assert result["answer"]
+
+
+def test_graph_preserves_conversation_history() -> None:
+    initial: AgentState = {
+        "question": "count words",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": "Hi there!"},
+        ],
+    }
+    result = build_graph().invoke(initial)
+
+    assert len(result["history"]) == 2
+    assert result["history"][0]["role"] == "user"
+    assert result["history"][1]["role"] == "assistant"
     assert result["answer"]
