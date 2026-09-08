@@ -31,8 +31,13 @@ def act(state: AgentState) -> dict[str, list[str]]:
 
 
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
-    """Route to tool execution or responding based on question complexity."""
-    if len(state["question"]) > 10:
+    """Route to tool execution if question suggests tool use (keywords or complexity)."""
+    # Check for tool-related keywords
+    tool_keywords = {"length", "upper", "lowercase", "word", "count", "uppercase"}
+    question_lower = state["question"].lower()
+    has_tool_keywords = any(kw in question_lower for kw in tool_keywords)
+
+    if has_tool_keywords or len(state["question"]) > 15:
         return "execute_tool"
     return "respond"
 

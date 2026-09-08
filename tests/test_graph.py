@@ -122,3 +122,31 @@ def test_graph_preserves_conversation_history() -> None:
     assert result["history"][0]["role"] == "user"
     assert result["history"][1]["role"] == "assistant"
     assert result["answer"]
+
+
+def test_graph_routes_to_tool_for_keyword_match() -> None:
+    initial: AgentState = {
+        "question": "uppercase",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert "uppercase" in result["steps"][-1]
+    assert len(result["tool_results"]) >= 1
+
+
+def test_graph_routes_to_respond_for_short_simple_question() -> None:
+    initial: AgentState = {
+        "question": "ok",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert len(result["tool_results"]) == 0
+    assert result["answer"]
