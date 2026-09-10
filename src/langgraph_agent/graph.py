@@ -61,9 +61,17 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
     }
 
 
-def respond(state: AgentState) -> dict[str, str]:
-    """Produce a final answer from the accumulated steps."""
-    return {"answer": f"Handled {state['question']!r} in {len(state['steps'])} steps."}
+def respond(state: AgentState, llm: LLMBase) -> dict[str, str]:
+    """Produce a final answer using the LLM, based on steps and tool results."""
+    context = f"Question: {state['question']}\n\nSteps taken:\n"
+    for step in state["steps"]:
+        context += f"- {step}\n"
+    if state["tool_results"]:
+        context += "\nTool results:\n"
+        for result in state["tool_results"]:
+            context += f"- {result}\n"
+    answer = llm.generate(context)
+    return {"answer": answer}
 
 
 def build_graph(llm: LLMBase | None = None) -> Any:
@@ -80,11 +88,14 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     def plan_node(state: AgentState) -> dict[str, list[str]]:
         return plan(state, llm)
 
+    def respond_node(state: AgentState) -> dict[str, str]:
+        return respond(state, llm)
+
     graph = StateGraph(AgentState)
     graph.add_node("plan", plan_node)
     graph.add_node("act", act)
     graph.add_node("execute_tool", execute_tool)
-    graph.add_node("respond", respond)
+    graph.add_node("respond", respond_node)
     graph.add_edge(START, "plan")
     graph.add_edge("plan", "act")
     graph.add_conditional_edges(
