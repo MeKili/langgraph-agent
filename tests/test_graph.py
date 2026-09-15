@@ -118,9 +118,14 @@ def test_graph_preserves_conversation_history() -> None:
     }
     result = build_graph().invoke(initial)
 
-    assert len(result["history"]) == 2
+    assert len(result["history"]) == 4
     assert result["history"][0]["role"] == "user"
+    assert result["history"][0]["content"] == "hello"
     assert result["history"][1]["role"] == "assistant"
+    assert result["history"][1]["content"] == "Hi there!"
+    assert result["history"][2]["role"] == "user"
+    assert result["history"][2]["content"] == "count words"
+    assert result["history"][3]["role"] == "assistant"
     assert result["answer"]
 
 

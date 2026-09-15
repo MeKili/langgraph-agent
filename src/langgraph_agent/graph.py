@@ -11,7 +11,7 @@ from typing import Any, Literal
 from langgraph.graph import END, START, StateGraph
 
 from langgraph_agent.llm import FakeLLM, LLMBase
-from langgraph_agent.state import AgentState
+from langgraph_agent.state import AgentState, Message
 from langgraph_agent.tools import (
     TOOLS_REGISTRY,
     register_tools,
@@ -61,9 +61,15 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
     }
 
 
-def respond(state: AgentState, llm: LLMBase) -> dict[str, str]:
+def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message]]:
     """Produce a final answer using the LLM, based on steps and tool results."""
-    context = f"Question: {state['question']}\n\nSteps taken:\n"
+    context = ""
+    if state["history"]:
+        context += "Conversation history:\n"
+        for msg in state["history"]:
+            context += f"{msg['role']}: {msg['content']}\n"
+        context += "\n"
+    context += f"Question: {state['question']}\n\nSteps taken:\n"
     for step in state["steps"]:
         context += f"- {step}\n"
     if state["tool_results"]:
@@ -71,7 +77,10 @@ def respond(state: AgentState, llm: LLMBase) -> dict[str, str]:
         for result in state["tool_results"]:
             context += f"- {result}\n"
     answer = llm.generate(context)
-    return {"answer": answer}
+    new_history = state["history"].copy()
+    new_history.append({"role": "user", "content": state["question"]})
+    new_history.append({"role": "assistant", "content": answer})
+    return {"answer": answer, "history": new_history}
 
 
 def build_graph(llm: LLMBase | None = None) -> Any:
@@ -88,7 +97,7 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     def plan_node(state: AgentState) -> dict[str, list[str]]:
         return plan(state, llm)
 
-    def respond_node(state: AgentState) -> dict[str, str]:
+    def respond_node(state: AgentState) -> dict[str, str | list[Message]]:
         return respond(state, llm)
 
     graph = StateGraph(AgentState)
