@@ -7,6 +7,7 @@ from langgraph_agent.tools import select_tool, select_tools
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
+    """Test that graph routes long questions to tool execution."""
     initial: AgentState = {
         "question": "what is the meaning of life",
         "steps": [],
@@ -23,6 +24,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
 
 
 def test_graph_routes_to_respond_for_short_question() -> None:
+    """Test that graph routes short questions to respond without tools."""
     initial: AgentState = {
         "question": "hi",
         "steps": [],
@@ -38,6 +40,7 @@ def test_graph_routes_to_respond_for_short_question() -> None:
 
 
 def test_graph_uses_fake_llm() -> None:
+    """Test that graph uses provided FakeLLM for deterministic planning."""
     llm = FakeLLM(response="Strategic plan for the question")
     initial: AgentState = {
         "question": "what should I do",
@@ -53,18 +56,22 @@ def test_graph_uses_fake_llm() -> None:
 
 
 def test_tool_selection_for_length_query() -> None:
+    """Test that length queries select get_length tool."""
     assert select_tool("what is the length of this") == "get_length"
 
 
 def test_tool_selection_for_uppercase_query() -> None:
+    """Test that uppercase queries select uppercase tool."""
     assert select_tool("can you make this upper") == "uppercase"
 
 
 def test_tool_selection_defaults_to_count_words() -> None:
+    """Test that unknown queries default to count_words tool."""
     assert select_tool("how many words here") == "count_words"
 
 
 def test_graph_uses_selected_tool() -> None:
+    """Test that graph executes the tool selected for a question."""
     initial: AgentState = {
         "question": "what is the length of this sentence",
         "steps": [],
@@ -79,17 +86,20 @@ def test_graph_uses_selected_tool() -> None:
 
 
 def test_select_tools_returns_multiple_tools() -> None:
+    """Test that select_tools identifies multiple tools from a single question."""
     tools = select_tools("what is the length and uppercase version")
     assert "get_length" in tools
     assert "uppercase" in tools
 
 
 def test_select_tools_defaults_to_count_words() -> None:
+    """Test that select_tools defaults to count_words when no keywords match."""
     tools = select_tools("random question")
     assert "count_words" in tools
 
 
 def test_graph_executes_multiple_tools() -> None:
+    """Test that graph executes all tools identified for a question."""
     initial: AgentState = {
         "question": "what is the length and can you uppercase this",
         "steps": [],
@@ -106,6 +116,7 @@ def test_graph_executes_multiple_tools() -> None:
 
 
 def test_graph_preserves_conversation_history() -> None:
+    """Test that graph preserves and extends conversation history across invocations."""
     initial: AgentState = {
         "question": "count words",
         "steps": [],
@@ -130,6 +141,7 @@ def test_graph_preserves_conversation_history() -> None:
 
 
 def test_graph_routes_to_tool_for_keyword_match() -> None:
+    """Test that graph routes to tools when keywords are detected in question."""
     initial: AgentState = {
         "question": "uppercase",
         "steps": [],
@@ -144,6 +156,7 @@ def test_graph_routes_to_tool_for_keyword_match() -> None:
 
 
 def test_graph_routes_to_respond_for_short_simple_question() -> None:
+    """Test that very short simple questions route directly to respond."""
     initial: AgentState = {
         "question": "ok",
         "steps": [],
