@@ -26,8 +26,10 @@ def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
 
 
 def act(state: AgentState) -> dict[str, list[str]]:
-    """Record an action step."""
-    return {"steps": [*state["steps"], "act: gather what is needed"]}
+    """Record selected tools and action strategy for the question."""
+    selected = select_tools(state["question"])
+    tools_str = ", ".join(selected) if selected else "none"
+    return {"steps": [*state["steps"], f"act: identified tools [{tools_str}]"]}
 
 
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:

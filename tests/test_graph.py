@@ -168,3 +168,19 @@ def test_graph_routes_to_respond_for_short_simple_question() -> None:
 
     assert len(result["tool_results"]) == 0
     assert result["answer"]
+
+
+def test_act_node_records_selected_tools() -> None:
+    """Test that act node identifies and records the selected tools."""
+    initial: AgentState = {
+        "question": "what is the length and uppercase version of this text",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+    result = build_graph().invoke(initial)
+
+    act_step = [s for s in result["steps"] if s.startswith("act:")][0]
+    assert "get_length" in act_step
+    assert "uppercase" in act_step
