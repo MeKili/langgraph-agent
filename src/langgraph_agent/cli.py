@@ -4,19 +4,13 @@ from __future__ import annotations
 
 import argparse
 
-from langgraph_agent.graph import build_graph
+from langgraph_agent.graph import build_graph, create_initial_state
 from langgraph_agent.state import AgentState
 
 
 def run(question: str) -> AgentState:
     """Invoke the compiled graph for a single question and return the final state."""
-    initial: AgentState = {
-        "question": question,
-        "steps": [],
-        "answer": "",
-        "tool_results": [],
-        "history": [],
-    }
+    initial = create_initial_state(question)
     result: AgentState = build_graph().invoke(initial)
     return result
 

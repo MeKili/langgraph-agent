@@ -45,15 +45,21 @@ def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Execute all selected tools and accumulate results."""
+    """Execute all selected tools with error handling."""
     tool_names = select_tools(state["question"])
     new_steps = state["steps"].copy()
     new_tool_results = state["tool_results"].copy()
 
     for tool_name in tool_names:
-        tool = TOOLS_REGISTRY[tool_name]
-        tool_output = tool(state["question"])
-        result = f"tool: {tool_name} returned {tool_output}"
+        try:
+            if tool_name not in TOOLS_REGISTRY:
+                result = f"tool: {tool_name} not found"
+            else:
+                tool = TOOLS_REGISTRY[tool_name]
+                tool_output = tool(state["question"])
+                result = f"tool: {tool_name} returned {tool_output}"
+        except Exception as e:
+            result = f"tool: {tool_name} error - {type(e).__name__}"
         new_steps.append(result)
         new_tool_results.append(result)
 
@@ -83,6 +89,28 @@ def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message]]:
     new_history.append({"role": "user", "content": state["question"]})
     new_history.append({"role": "assistant", "content": answer})
     return {"answer": answer, "history": new_history}
+
+
+def create_initial_state(
+    question: str,
+    history: list[Message] | None = None,
+) -> AgentState:
+    """Create a fresh initial state for a question.
+
+    Args:
+        question: The question to process.
+        history: Optional conversation history.
+
+    Returns:
+        A fresh AgentState.
+    """
+    return {
+        "question": question,
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": history or [],
+    }
 
 
 def build_graph(llm: LLMBase | None = None) -> Any:

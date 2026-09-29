@@ -1,6 +1,6 @@
 """Tests for the agent graph (runs the compiled graph offline, no LLM)."""
 
-from langgraph_agent.graph import build_graph
+from langgraph_agent.graph import build_graph, create_initial_state
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
 from langgraph_agent.tools import select_tool, select_tools
@@ -184,3 +184,49 @@ def test_act_node_records_selected_tools() -> None:
     act_step = [s for s in result["steps"] if s.startswith("act:")][0]
     assert "get_length" in act_step
     assert "uppercase" in act_step
+
+
+def test_create_initial_state_fresh() -> None:
+    """Test create_initial_state creates a fresh empty state."""
+    state = create_initial_state("test question")
+    assert state["question"] == "test question"
+    assert state["steps"] == []
+    assert state["answer"] == ""
+    assert state["tool_results"] == []
+    assert state["history"] == []
+
+
+def test_create_initial_state_with_history() -> None:
+    """Test create_initial_state preserves provided history."""
+    history = [
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "hi"},
+    ]
+    state = create_initial_state("follow up", history)
+    assert state["question"] == "follow up"
+    assert len(state["history"]) == 2
+    assert state["history"][0]["content"] == "hello"
+
+
+def test_execute_tool_handles_errors() -> None:
+    """Test that tool execution errors are handled gracefully."""
+    from langgraph_agent.graph import execute_tool
+    from langgraph_agent.tools import TOOLS_REGISTRY
+
+    initial: AgentState = {
+        "question": "get_length test",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+
+    original = TOOLS_REGISTRY.copy()
+    try:
+        TOOLS_REGISTRY.clear()
+        TOOLS_REGISTRY["get_length"] = lambda x: len(x) / 0
+        result = execute_tool(initial)
+        assert any("error" in step.lower() for step in result["steps"])
+    finally:
+        TOOLS_REGISTRY.clear()
+        TOOLS_REGISTRY.update(original)
