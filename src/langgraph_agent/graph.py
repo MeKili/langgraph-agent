@@ -35,7 +35,7 @@ def act(state: AgentState) -> dict[str, list[str]]:
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
     """Route to tool execution if question suggests tool use (keywords or complexity)."""
     # Check for tool-related keywords
-    tool_keywords = {"length", "upper", "lowercase", "word", "count", "uppercase"}
+    tool_keywords = {"length", "upper", "lower", "word", "count", "uppercase", "lowercase"}
     question_lower = state["question"].lower()
     has_tool_keywords = any(kw in question_lower for kw in tool_keywords)
 

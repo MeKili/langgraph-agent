@@ -3,7 +3,7 @@
 from langgraph_agent.graph import build_graph, create_initial_state
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
-from langgraph_agent.tools import select_tool, select_tools
+from langgraph_agent.tools import lowercase, select_tool, select_tools
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
@@ -70,6 +70,13 @@ def test_tool_selection_defaults_to_count_words() -> None:
     assert select_tool("how many words here") == "count_words"
 
 
+def test_lowercase_tool() -> None:
+    """Test that lowercase tool converts text to lowercase."""
+    assert lowercase("HELLO WORLD") == "hello world"
+    assert lowercase("Mixed Case") == "mixed case"
+    assert lowercase("already lowercase") == "already lowercase"
+
+
 def test_graph_uses_selected_tool() -> None:
     """Test that graph executes the tool selected for a question."""
     initial: AgentState = {
@@ -90,6 +97,12 @@ def test_select_tools_returns_multiple_tools() -> None:
     tools = select_tools("what is the length and uppercase version")
     assert "get_length" in tools
     assert "uppercase" in tools
+
+
+def test_select_tools_recognizes_lowercase() -> None:
+    """Test that select_tools identifies lowercase tool from a question."""
+    tools = select_tools("convert to lowercase")
+    assert "lowercase" in tools
 
 
 def test_select_tools_defaults_to_count_words() -> None:
@@ -206,6 +219,21 @@ def test_create_initial_state_with_history() -> None:
     assert state["question"] == "follow up"
     assert len(state["history"]) == 2
     assert state["history"][0]["content"] == "hello"
+
+
+def test_graph_routes_to_lowercase_tool() -> None:
+    """Test that graph routes to lowercase tool when keyword is detected."""
+    initial: AgentState = {
+        "question": "convert to lowercase",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert any("lowercase" in step for step in result["steps"])
+    assert len(result["tool_results"]) >= 1
 
 
 def test_execute_tool_handles_errors() -> None:

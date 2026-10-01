@@ -17,6 +17,11 @@ def uppercase(text: str) -> str:
     return text.upper()
 
 
+def lowercase(text: str) -> str:
+    """Convert text to lowercase."""
+    return text.lower()
+
+
 def count_words(text: str) -> int:
     """Count words in text."""
     return len(text.split())
@@ -26,6 +31,7 @@ def register_tools() -> None:
     """Register available tools in the global registry."""
     TOOLS_REGISTRY["get_length"] = get_length
     TOOLS_REGISTRY["uppercase"] = uppercase
+    TOOLS_REGISTRY["lowercase"] = lowercase
     TOOLS_REGISTRY["count_words"] = count_words
 
 
@@ -50,6 +56,8 @@ def select_tools(question: str) -> list[str]:
         tools.append("get_length")
     if "upper" in lower_q or "uppercase" in lower_q:
         tools.append("uppercase")
+    if "lower" in lower_q or "lowercase" in lower_q:
+        tools.append("lowercase")
     if "word" in lower_q or "count" in lower_q:
         tools.append("count_words")
 
