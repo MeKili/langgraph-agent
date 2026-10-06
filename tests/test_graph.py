@@ -239,7 +239,7 @@ def test_graph_routes_to_lowercase_tool() -> None:
 def test_execute_tool_handles_errors() -> None:
     """Test that tool execution errors are handled gracefully."""
     from langgraph_agent.graph import execute_tool
-    from langgraph_agent.tools import TOOLS_REGISTRY
+    from langgraph_agent.tools import TOOLS_REGISTRY, ToolDef
 
     initial: AgentState = {
         "question": "get_length test",
@@ -252,7 +252,11 @@ def test_execute_tool_handles_errors() -> None:
     original = TOOLS_REGISTRY.copy()
     try:
         TOOLS_REGISTRY.clear()
-        TOOLS_REGISTRY["get_length"] = lambda x: len(x) / 0
+        TOOLS_REGISTRY["get_length"] = ToolDef(
+            name="get_length",
+            description="Test tool",
+            func=lambda x: len(x) / 0,  # type: ignore
+        )
         result = execute_tool(initial)
         assert any("error" in step.lower() for step in result["steps"])
     finally:

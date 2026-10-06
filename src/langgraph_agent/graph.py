@@ -55,8 +55,8 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
             if tool_name not in TOOLS_REGISTRY:
                 result = f"tool: {tool_name} not found"
             else:
-                tool = TOOLS_REGISTRY[tool_name]
-                tool_output = tool(state["question"])
+                tool_def = TOOLS_REGISTRY[tool_name]
+                tool_output = tool_def.func(state["question"])
                 result = f"tool: {tool_name} returned {tool_output}"
         except Exception as e:
             result = f"tool: {tool_name} error - {type(e).__name__}"

@@ -3,8 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
-TOOLS_REGISTRY: dict[str, Callable[[str], int | str]] = {}
+
+@dataclass(frozen=True)
+class ToolDef:
+    """Tool definition with metadata."""
+
+    name: str
+    description: str
+    func: Callable[[str], int | str]
+
+
+TOOLS_REGISTRY: dict[str, ToolDef] = {}
 
 
 def get_length(text: str) -> int:
@@ -29,10 +40,26 @@ def count_words(text: str) -> int:
 
 def register_tools() -> None:
     """Register available tools in the global registry."""
-    TOOLS_REGISTRY["get_length"] = get_length
-    TOOLS_REGISTRY["uppercase"] = uppercase
-    TOOLS_REGISTRY["lowercase"] = lowercase
-    TOOLS_REGISTRY["count_words"] = count_words
+    TOOLS_REGISTRY["get_length"] = ToolDef(
+        name="get_length",
+        description="Returns the character length of the input text",
+        func=get_length,
+    )
+    TOOLS_REGISTRY["uppercase"] = ToolDef(
+        name="uppercase",
+        description="Converts the input text to uppercase",
+        func=uppercase,
+    )
+    TOOLS_REGISTRY["lowercase"] = ToolDef(
+        name="lowercase",
+        description="Converts the input text to lowercase",
+        func=lowercase,
+    )
+    TOOLS_REGISTRY["count_words"] = ToolDef(
+        name="count_words",
+        description="Counts the number of words in the input text",
+        func=count_words,
+    )
 
 
 def select_tool(question: str) -> str:
