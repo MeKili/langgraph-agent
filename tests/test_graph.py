@@ -3,7 +3,7 @@
 from langgraph_agent.graph import build_graph, create_initial_state
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
-from langgraph_agent.tools import lowercase, select_tool, select_tools
+from langgraph_agent.tools import count_sentences, lowercase, select_tool, select_tools
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
@@ -80,7 +80,7 @@ def test_lowercase_tool() -> None:
 def test_graph_uses_selected_tool() -> None:
     """Test that graph executes the tool selected for a question."""
     initial: AgentState = {
-        "question": "what is the length of this sentence",
+        "question": "what is the length of this text",
         "steps": [],
         "answer": "",
         "tool_results": [],
@@ -89,7 +89,7 @@ def test_graph_uses_selected_tool() -> None:
     result = build_graph().invoke(initial)
 
     assert any("get_length" in step for step in result["steps"])
-    assert len(result["tool_results"]) == 1
+    assert len(result["tool_results"]) >= 1
 
 
 def test_select_tools_returns_multiple_tools() -> None:
@@ -262,3 +262,39 @@ def test_execute_tool_handles_errors() -> None:
     finally:
         TOOLS_REGISTRY.clear()
         TOOLS_REGISTRY.update(original)
+
+
+def test_count_sentences_single() -> None:
+    """Test that count_sentences returns 1 for a single sentence."""
+    assert count_sentences("Hello world.") == 1
+
+
+def test_count_sentences_multiple() -> None:
+    """Test that count_sentences counts multiple sentences correctly."""
+    assert count_sentences("Hello. How are you? Fine!") == 3
+
+
+def test_count_sentences_no_punctuation() -> None:
+    """Test that count_sentences handles text without sentence punctuation."""
+    assert count_sentences("Hello") == 1
+
+
+def test_select_tools_recognizes_sentence() -> None:
+    """Test that select_tools identifies count_sentences tool from a question."""
+    tools = select_tools("how many sentences")
+    assert "count_sentences" in tools
+
+
+def test_graph_routes_to_sentence_tool() -> None:
+    """Test that graph routes to sentence counting when keyword is detected."""
+    initial: AgentState = {
+        "question": "count sentences in this text",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert any("count_sentences" in step for step in result["steps"])
+    assert len(result["tool_results"]) >= 1

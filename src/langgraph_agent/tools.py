@@ -38,6 +38,14 @@ def count_words(text: str) -> int:
     return len(text.split())
 
 
+def count_sentences(text: str) -> int:
+    """Count sentences in text."""
+    import re
+
+    sentences = re.split(r"[.!?]+", text)
+    return len([s.strip() for s in sentences if s.strip()])
+
+
 def register_tools() -> None:
     """Register available tools in the global registry."""
     TOOLS_REGISTRY["get_length"] = ToolDef(
@@ -59,6 +67,11 @@ def register_tools() -> None:
         name="count_words",
         description="Counts the number of words in the input text",
         func=count_words,
+    )
+    TOOLS_REGISTRY["count_sentences"] = ToolDef(
+        name="count_sentences",
+        description="Counts the number of sentences in the input text",
+        func=count_sentences,
     )
 
 
@@ -85,7 +98,9 @@ def select_tools(question: str) -> list[str]:
         tools.append("uppercase")
     if "lower" in lower_q or "lowercase" in lower_q:
         tools.append("lowercase")
-    if "word" in lower_q or "count" in lower_q:
+    if "sentence" in lower_q:
+        tools.append("count_sentences")
+    elif "word" in lower_q or "count" in lower_q:
         tools.append("count_words")
 
     return tools if tools else ["count_words"]
