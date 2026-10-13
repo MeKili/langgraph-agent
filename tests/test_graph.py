@@ -3,7 +3,13 @@
 from langgraph_agent.graph import build_graph, create_initial_state
 from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
-from langgraph_agent.tools import count_sentences, lowercase, select_tool, select_tools
+from langgraph_agent.tools import (
+    count_sentences,
+    get_available_tools,
+    lowercase,
+    select_tool,
+    select_tools,
+)
 
 
 def test_graph_routes_to_tool_for_long_question() -> None:
@@ -262,6 +268,30 @@ def test_execute_tool_handles_errors() -> None:
     finally:
         TOOLS_REGISTRY.clear()
         TOOLS_REGISTRY.update(original)
+
+
+def test_get_available_tools_returns_all_tools() -> None:
+    """Test that get_available_tools returns all registered tools."""
+    build_graph()
+    tools = get_available_tools()
+    assert len(tools) >= 5
+    tool_names = [t.name for t in tools]
+    assert "get_length" in tool_names
+    assert "uppercase" in tool_names
+    assert "lowercase" in tool_names
+    assert "count_words" in tool_names
+    assert "count_sentences" in tool_names
+
+
+def test_get_available_tools_has_descriptions() -> None:
+    """Test that available tools include descriptions."""
+    build_graph()
+    tools = get_available_tools()
+    for tool in tools:
+        assert tool.description
+        assert len(tool.description) > 0
+        assert tool.name
+        assert tool.func
 
 
 def test_count_sentences_single() -> None:

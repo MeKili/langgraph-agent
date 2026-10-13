@@ -84,6 +84,11 @@ def select_tool(question: str) -> str:
     return "count_words"
 
 
+def get_available_tools() -> list[ToolDef]:
+    """Get all registered tools with their descriptions."""
+    return list(TOOLS_REGISTRY.values())
+
+
 def select_tools(question: str) -> list[str]:
     """Select multiple tools that might be needed for the question.
 
