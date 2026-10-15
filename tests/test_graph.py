@@ -20,6 +20,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -27,6 +28,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
     assert "tool: count_words" in result["steps"][-1]
     assert len(result["tool_results"]) == 1
     assert result["answer"]
+    assert result["turn_count"] == 1
 
 
 def test_graph_routes_to_respond_for_short_question() -> None:
@@ -37,12 +39,14 @@ def test_graph_routes_to_respond_for_short_question() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
     assert result["question"] == "hi"
     assert len(result["tool_results"]) == 0
     assert result["answer"]
+    assert result["turn_count"] == 1
 
 
 def test_graph_uses_fake_llm() -> None:
@@ -54,6 +58,7 @@ def test_graph_uses_fake_llm() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph(llm).invoke(initial)
 
@@ -91,6 +96,7 @@ def test_graph_uses_selected_tool() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -125,6 +131,7 @@ def test_graph_executes_multiple_tools() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -145,6 +152,7 @@ def test_graph_preserves_conversation_history() -> None:
             {"role": "user", "content": "hello"},
             {"role": "assistant", "content": "Hi there!"},
         ],
+        "turn_count": 1,
     }
     result = build_graph().invoke(initial)
 
@@ -157,6 +165,7 @@ def test_graph_preserves_conversation_history() -> None:
     assert result["history"][2]["content"] == "count words"
     assert result["history"][3]["role"] == "assistant"
     assert result["answer"]
+    assert result["turn_count"] == 2
 
 
 def test_graph_routes_to_tool_for_keyword_match() -> None:
@@ -167,6 +176,7 @@ def test_graph_routes_to_tool_for_keyword_match() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -182,6 +192,7 @@ def test_graph_routes_to_respond_for_short_simple_question() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -197,6 +208,7 @@ def test_act_node_records_selected_tools() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -225,6 +237,31 @@ def test_create_initial_state_with_history() -> None:
     assert state["question"] == "follow up"
     assert len(state["history"]) == 2
     assert state["history"][0]["content"] == "hello"
+    assert state["turn_count"] == 1
+
+
+def test_turn_count_increments_with_each_response() -> None:
+    """Test that turn_count increments each time the agent responds."""
+    history = [
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "hi"},
+    ]
+    initial: AgentState = {
+        "question": "follow up question",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": history,
+        "turn_count": 1,
+    }
+    result = build_graph().invoke(initial)
+    assert result["turn_count"] == 2
+
+
+def test_turn_count_starts_at_zero() -> None:
+    """Test that turn_count starts at 0 for a fresh conversation."""
+    state = create_initial_state("first question")
+    assert state["turn_count"] == 0
 
 
 def test_graph_routes_to_lowercase_tool() -> None:
@@ -235,6 +272,7 @@ def test_graph_routes_to_lowercase_tool() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 
@@ -253,6 +291,7 @@ def test_execute_tool_handles_errors() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
 
     original = TOOLS_REGISTRY.copy()
@@ -323,6 +362,7 @@ def test_graph_routes_to_sentence_tool() -> None:
         "answer": "",
         "tool_results": [],
         "history": [],
+        "turn_count": 0,
     }
     result = build_graph().invoke(initial)
 

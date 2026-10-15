@@ -69,7 +69,7 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
     }
 
 
-def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message]]:
+def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int]:
     """Produce a final answer using the LLM, based on steps and tool results."""
     context = ""
     if state["history"]:
@@ -88,7 +88,7 @@ def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message]]:
     new_history = state["history"].copy()
     new_history.append({"role": "user", "content": state["question"]})
     new_history.append({"role": "assistant", "content": answer})
-    return {"answer": answer, "history": new_history}
+    return {"answer": answer, "history": new_history, "turn_count": state["turn_count"] + 1}
 
 
 def create_initial_state(
@@ -110,6 +110,7 @@ def create_initial_state(
         "answer": "",
         "tool_results": [],
         "history": history or [],
+        "turn_count": len(history or []) // 2,
     }
 
 
@@ -127,7 +128,7 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     def plan_node(state: AgentState) -> dict[str, list[str]]:
         return plan(state, llm)
 
-    def respond_node(state: AgentState) -> dict[str, str | list[Message]]:
+    def respond_node(state: AgentState) -> dict[str, str | list[Message] | int]:
         return respond(state, llm)
 
     graph = StateGraph(AgentState)

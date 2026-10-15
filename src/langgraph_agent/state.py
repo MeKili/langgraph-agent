@@ -20,3 +20,4 @@ class AgentState(TypedDict):
     answer: str
     tool_results: list[str]
     history: list[Message]
+    turn_count: int
