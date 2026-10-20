@@ -118,8 +118,8 @@ def test_select_tools_recognizes_lowercase() -> None:
 
 
 def test_select_tools_defaults_to_count_words() -> None:
-    """Test that select_tools defaults to count_words when no keywords match."""
-    tools = select_tools("random question")
+    """Test that select_tools defaults to count_words for long questions without keywords."""
+    tools = select_tools("what is a random question about something")
     assert "count_words" in tools
 
 

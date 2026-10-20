@@ -90,9 +90,10 @@ def get_available_tools() -> list[ToolDef]:
 
 
 def select_tools(question: str) -> list[str]:
-    """Select multiple tools that might be needed for the question.
+    """Select tools that might be needed for the question.
 
-    Returns a list of tool names to execute in sequence.
+    Returns a list of tool names to execute in sequence, or empty if no tools
+    are relevant to a short question.
     """
     tools: list[str] = []
     lower_q = question.lower()
@@ -108,4 +109,7 @@ def select_tools(question: str) -> list[str]:
     elif "word" in lower_q or "count" in lower_q:
         tools.append("count_words")
 
-    return tools if tools else ["count_words"]
+    if not tools and len(question) > 15:
+        tools.append("count_words")
+
+    return tools
