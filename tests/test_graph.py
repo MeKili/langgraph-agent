@@ -21,6 +21,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -40,6 +41,7 @@ def test_graph_routes_to_respond_for_short_question() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -59,6 +61,7 @@ def test_graph_uses_fake_llm() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph(llm).invoke(initial)
 
@@ -97,6 +100,7 @@ def test_graph_uses_selected_tool() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -132,6 +136,7 @@ def test_graph_executes_multiple_tools() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -153,6 +158,7 @@ def test_graph_preserves_conversation_history() -> None:
             {"role": "assistant", "content": "Hi there!"},
         ],
         "turn_count": 1,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -177,6 +183,7 @@ def test_graph_routes_to_tool_for_keyword_match() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -193,6 +200,7 @@ def test_graph_routes_to_respond_for_short_simple_question() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -209,6 +217,7 @@ def test_act_node_records_selected_tools() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -253,6 +262,7 @@ def test_turn_count_increments_with_each_response() -> None:
         "tool_results": [],
         "history": history,
         "turn_count": 1,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
     assert result["turn_count"] == 2
@@ -273,6 +283,7 @@ def test_graph_routes_to_lowercase_tool() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
@@ -292,6 +303,7 @@ def test_execute_tool_handles_errors() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": ["get_length"],
     }
 
     original = TOOLS_REGISTRY.copy()
@@ -363,8 +375,45 @@ def test_graph_routes_to_sentence_tool() -> None:
         "tool_results": [],
         "history": [],
         "turn_count": 0,
+        "selected_tools": [],
     }
     result = build_graph().invoke(initial)
 
     assert any("count_sentences" in step for step in result["steps"])
     assert len(result["tool_results"]) >= 1
+
+
+def test_selected_tools_populated_by_act_node() -> None:
+    """Test that act node populates selected_tools in state."""
+    initial: AgentState = {
+        "question": "what is the length of this text",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert len(result["selected_tools"]) > 0
+    assert "get_length" in result["selected_tools"]
+
+
+def test_router_uses_selected_tools_from_state() -> None:
+    """Test that router correctly uses selected_tools from state."""
+    initial: AgentState = {
+        "question": "uppercase and lowercase",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert len(result["selected_tools"]) >= 2
+    assert "uppercase" in result["selected_tools"]
+    assert "lowercase" in result["selected_tools"]
+    assert len(result["tool_results"]) >= 2

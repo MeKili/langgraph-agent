@@ -29,20 +29,22 @@ def act(state: AgentState) -> dict[str, list[str]]:
     """Record selected tools and action strategy for the question."""
     selected = select_tools(state["question"])
     tools_str = ", ".join(selected) if selected else "none"
-    return {"steps": [*state["steps"], f"act: identified tools [{tools_str}]"]}
+    return {
+        "steps": [*state["steps"], f"act: identified tools [{tools_str}]"],
+        "selected_tools": selected,
+    }
 
 
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
-    """Route to tool execution only if tools are selected for the question."""
-    selected = select_tools(state["question"])
-    if selected:
+    """Route to tool execution only if tools are selected."""
+    if state["selected_tools"]:
         return "execute_tool"
     return "respond"
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Execute all selected tools with error handling."""
-    tool_names = select_tools(state["question"])
+    """Execute tools selected in act node with error handling."""
+    tool_names = state["selected_tools"]
     new_steps = state["steps"].copy()
     new_tool_results = state["tool_results"].copy()
 
@@ -107,6 +109,7 @@ def create_initial_state(
         "tool_results": [],
         "history": history or [],
         "turn_count": len(history or []) // 2,
+        "selected_tools": [],
     }
 
 

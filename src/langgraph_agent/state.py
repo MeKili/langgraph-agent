@@ -21,3 +21,4 @@ class AgentState(TypedDict):
     tool_results: list[str]
     history: list[Message]
     turn_count: int
+    selected_tools: list[str]
