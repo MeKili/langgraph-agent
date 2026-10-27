@@ -39,7 +39,7 @@ def count_words(text: str) -> int:
 
 
 def count_sentences(text: str) -> int:
-    """Count sentences in text."""
+    """Count sentences."""
     import re
 
     sentences = re.split(r"[.!?]+", text)
@@ -76,7 +76,7 @@ def register_tools() -> None:
 
 
 def select_tool(question: str) -> str:
-    """Select a tool based on the question."""
+    """Select a single tool for the question."""
     if "length" in question.lower():
         return "get_length"
     if "upper" in question.lower():
@@ -85,16 +85,12 @@ def select_tool(question: str) -> str:
 
 
 def get_available_tools() -> list[ToolDef]:
-    """Get all registered tools with their descriptions."""
+    """Return all registered tools."""
     return list(TOOLS_REGISTRY.values())
 
 
 def select_tools(question: str) -> list[str]:
-    """Select tools that might be needed for the question.
-
-    Returns a list of tool names to execute in sequence, or empty if no tools
-    are relevant to a short question.
-    """
+    """Select tools needed for the question."""
     tools: list[str] = []
     lower_q = question.lower()
 

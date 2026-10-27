@@ -15,12 +15,12 @@ class LLMBase(ABC):
 
 
 class FakeLLM(LLMBase):
-    """Deterministic fake LLM for testing (no network calls)."""
+    """Deterministic LLM for testing."""
 
     def __init__(self, response: str = "This is a generated response.") -> None:
         """Initialize with a fixed response."""
         self.response = response
 
     def generate(self, prompt: str) -> str:
-        """Return the fixed response, ignoring the prompt."""
+        """Return the fixed response."""
         return self.response
