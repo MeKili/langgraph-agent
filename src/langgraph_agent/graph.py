@@ -20,13 +20,13 @@ from langgraph_agent.tools import (
 
 
 def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
-    """Record a planning step using the LLM."""
+    """Generate and record a plan for the question using the LLM."""
     plan_text = llm.generate(f"Plan for: {state['question']}")
     return {"steps": [*state["steps"], f"plan: {plan_text}"]}
 
 
 def act(state: AgentState) -> dict[str, list[str]]:
-    """Record selected tools and action strategy for the question."""
+    """Identify and record which tools are needed to answer the question."""
     selected = select_tools(state["question"])
     tools_str = ", ".join(selected) if selected else "none"
     return {
@@ -43,7 +43,7 @@ def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Execute tools selected in act node with error handling."""
+    """Execute each selected tool with the question, recording results and errors."""
     tool_names = state["selected_tools"]
     new_steps = state["steps"].copy()
     new_tool_results = state["tool_results"].copy()
@@ -68,7 +68,7 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
 
 
 def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int]:
-    """Produce a final answer using the LLM, based on steps and tool results."""
+    """Generate a final answer using the LLM, incorporating history, steps, and tool results."""
     context = ""
     if state["history"]:
         context += "Conversation history:\n"

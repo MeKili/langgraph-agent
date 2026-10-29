@@ -19,7 +19,7 @@ TOOLS_REGISTRY: dict[str, ToolDef] = {}
 
 
 def get_length(text: str) -> int:
-    """Get the length of a string."""
+    """Return the character length of the input text."""
     return len(text)
 
 
@@ -34,12 +34,12 @@ def lowercase(text: str) -> str:
 
 
 def count_words(text: str) -> int:
-    """Count words in text."""
+    """Count the number of words in the input text."""
     return len(text.split())
 
 
 def count_sentences(text: str) -> int:
-    """Count sentences in text."""
+    """Count the number of sentences in the input text, splitting on .!? punctuation."""
     import re
 
     sentences = re.split(r"[.!?]+", text)
@@ -76,7 +76,7 @@ def register_tools() -> None:
 
 
 def select_tool(question: str) -> str:
-    """Select a tool based on the question."""
+    """Select a single tool based on keywords in the question."""
     if "length" in question.lower():
         return "get_length"
     if "upper" in question.lower():
@@ -90,11 +90,7 @@ def get_available_tools() -> list[ToolDef]:
 
 
 def select_tools(question: str) -> list[str]:
-    """Select tools that might be needed for the question.
-
-    Returns a list of tool names to execute in sequence, or empty if no tools
-    are relevant to a short question.
-    """
+    """Select tools needed to answer the question based on keyword matching."""
     tools: list[str] = []
     lower_q = question.lower()
 
