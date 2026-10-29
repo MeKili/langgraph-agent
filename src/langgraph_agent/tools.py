@@ -85,7 +85,7 @@ def select_tool(question: str) -> str:
 
 
 def get_available_tools() -> list[ToolDef]:
-    """Get all registered tools with their descriptions."""
+    """Return all registered tools."""
     return list(TOOLS_REGISTRY.values())
 
 

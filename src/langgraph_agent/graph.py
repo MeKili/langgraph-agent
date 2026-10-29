@@ -93,15 +93,7 @@ def create_initial_state(
     question: str,
     history: list[Message] | None = None,
 ) -> AgentState:
-    """Create a fresh initial state for a question.
-
-    Args:
-        question: The question to process.
-        history: Optional conversation history.
-
-    Returns:
-        A fresh AgentState.
-    """
+    """Create a fresh state for a question."""
     return {
         "question": question,
         "steps": [],
@@ -114,11 +106,7 @@ def create_initial_state(
 
 
 def build_graph(llm: LLMBase | None = None) -> Any:
-    """Build and compile the agent graph.
-
-    Args:
-        llm: Language model instance. Uses FakeLLM if not provided.
-    """
+    """Build the agent graph; uses FakeLLM if none provided."""
     if llm is None:
         llm = FakeLLM()
 
