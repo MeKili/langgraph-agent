@@ -109,3 +109,13 @@ def select_tools(question: str) -> list[str]:
         tools.append("count_words")
 
     return tools
+
+
+def format_tools() -> str:
+    """Format available tools with descriptions for display in prompts."""
+    if not TOOLS_REGISTRY:
+        return "No tools available."
+    lines = ["Available tools:"]
+    for tool in TOOLS_REGISTRY.values():
+        lines.append(f"- {tool.name}: {tool.description}")
+    return "\n".join(lines)

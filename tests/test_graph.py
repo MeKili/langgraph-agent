@@ -5,6 +5,7 @@ from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
 from langgraph_agent.tools import (
     count_sentences,
+    format_tools,
     get_available_tools,
     lowercase,
     select_tool,
@@ -417,3 +418,26 @@ def test_router_uses_selected_tools_from_state() -> None:
     assert "uppercase" in result["selected_tools"]
     assert "lowercase" in result["selected_tools"]
     assert len(result["tool_results"]) >= 2
+
+
+def test_format_tools_includes_all_tools() -> None:
+    """Test that format_tools includes all registered tools with descriptions."""
+    build_graph()
+    formatted = format_tools()
+    assert "Available tools:" in formatted
+    assert "get_length" in formatted
+    assert "uppercase" in formatted
+    assert "lowercase" in formatted
+    assert "count_words" in formatted
+    assert "count_sentences" in formatted
+
+
+def test_format_tools_includes_descriptions() -> None:
+    """Test that format_tools includes tool descriptions."""
+    build_graph()
+    formatted = format_tools()
+    assert "character length" in formatted
+    assert "uppercase" in formatted
+    assert "lowercase" in formatted
+    assert "words" in formatted
+    assert "sentences" in formatted
