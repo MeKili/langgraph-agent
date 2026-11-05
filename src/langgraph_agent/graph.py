@@ -14,6 +14,7 @@ from langgraph_agent.llm import FakeLLM, LLMBase
 from langgraph_agent.state import AgentState, Message
 from langgraph_agent.tools import (
     TOOLS_REGISTRY,
+    format_tools,
     register_tools,
     select_tools,
 )
@@ -21,7 +22,9 @@ from langgraph_agent.tools import (
 
 def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
     """Generate and record a plan for the question using the LLM."""
-    plan_text = llm.generate(f"Plan for: {state['question']}")
+    tools_info = format_tools()
+    prompt = f"{tools_info}\n\nPlan for: {state['question']}"
+    plan_text = llm.generate(prompt)
     return {"steps": [*state["steps"], f"plan: {plan_text}"]}
 
 
@@ -69,7 +72,7 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
 
 def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int]:
     """Generate a final answer using the LLM, incorporating history, steps, and tool results."""
-    context = ""
+    context = f"{format_tools()}\n\n"
     if state["history"]:
         context += "Conversation history:\n"
         for msg in state["history"]:
