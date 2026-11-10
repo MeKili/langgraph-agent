@@ -441,3 +441,36 @@ def test_format_tools_includes_descriptions() -> None:
     assert "lowercase" in formatted
     assert "words" in formatted
     assert "sentences" in formatted
+
+
+def test_router_sends_simple_question_directly_to_respond() -> None:
+    """Test that very short questions skip planning and go directly to respond."""
+    initial: AgentState = {
+        "question": "hi",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+    }
+    result = build_graph().invoke(initial)
+    assert "plan:" not in " ".join(result["steps"])
+    assert result["answer"]
+    assert result["turn_count"] == 1
+
+
+def test_router_sends_complex_question_to_plan() -> None:
+    """Test that longer questions go through planning."""
+    initial: AgentState = {
+        "question": "what is the meaning of life",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+    }
+    result = build_graph().invoke(initial)
+    assert any("plan:" in step for step in result["steps"])
+    assert result["answer"]

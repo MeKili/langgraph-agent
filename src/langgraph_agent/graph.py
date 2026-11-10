@@ -38,6 +38,14 @@ def act(state: AgentState) -> dict[str, list[str]]:
     }
 
 
+def should_plan(state: AgentState) -> Literal["plan", "respond"]:
+    """Skip planning for very short questions; plan for those with keywords or length > 10."""
+    q_lower = state["question"].lower()
+    keywords = {"length", "upper", "lower", "word", "sentence", "count"}
+    has_keyword = any(kw in q_lower for kw in keywords)
+    return "plan" if (has_keyword or len(state["question"]) > 10) else "respond"
+
+
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
     """Route to tool execution only if tools are selected."""
     if state["selected_tools"]:
@@ -126,7 +134,11 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     graph.add_node("act", act)
     graph.add_node("execute_tool", execute_tool)
     graph.add_node("respond", respond_node)
-    graph.add_edge(START, "plan")
+    graph.add_conditional_edges(
+        START,
+        should_plan,
+        {"plan": "plan", "respond": "respond"},
+    )
     graph.add_edge("plan", "act")
     graph.add_conditional_edges(
         "act",
