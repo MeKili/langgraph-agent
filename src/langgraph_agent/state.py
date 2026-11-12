@@ -6,14 +6,24 @@ from typing import TypedDict
 
 
 class Message(TypedDict):
-    """A message in the conversation history."""
+    """A single message with role and content."""
 
     role: str
     content: str
 
 
 class AgentState(TypedDict):
-    """State passed between graph nodes."""
+    """State threaded through the agent graph.
+
+    Fields:
+        question: The user's input question.
+        steps: Log of reasoning steps taken.
+        answer: The final generated response.
+        tool_results: Recorded outputs from tool execution.
+        history: Previous conversation messages.
+        turn_count: Total number of responses given.
+        selected_tools: Tools identified for this question.
+    """
 
     question: str
     steps: list[str]

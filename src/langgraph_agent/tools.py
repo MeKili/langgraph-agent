@@ -8,38 +8,38 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ToolDef:
-    """Tool definition with metadata."""
+    """Immutable definition of a tool with name, description, and callable."""
 
     name: str
     description: str
     func: Callable[[str], int | str]
 
 
-TOOLS_REGISTRY: dict[str, ToolDef] = {}
+TOOLS_REGISTRY: dict[str, ToolDef] = {}  # Global registry of available tools
 
 
 def get_length(text: str) -> int:
-    """Return the character length of the input text."""
+    """Return character count of text."""
     return len(text)
 
 
 def uppercase(text: str) -> str:
-    """Convert text to uppercase."""
+    """Return text in uppercase."""
     return text.upper()
 
 
 def lowercase(text: str) -> str:
-    """Convert text to lowercase."""
+    """Return text in lowercase."""
     return text.lower()
 
 
 def count_words(text: str) -> int:
-    """Count the number of words in the input text."""
+    """Return number of space-separated words."""
     return len(text.split())
 
 
 def count_sentences(text: str) -> int:
-    """Count the number of sentences in the input text, splitting on .!? punctuation."""
+    """Return number of sentences (split on .!? punctuation)."""
     import re
 
     sentences = re.split(r"[.!?]+", text)
@@ -47,7 +47,7 @@ def count_sentences(text: str) -> int:
 
 
 def register_tools() -> None:
-    """Register available tools in the global registry."""
+    """Populate TOOLS_REGISTRY with all available tools."""
     TOOLS_REGISTRY["get_length"] = ToolDef(
         name="get_length",
         description="Returns the character length of the input text",
@@ -76,7 +76,7 @@ def register_tools() -> None:
 
 
 def select_tool(question: str) -> str:
-    """Select a single tool based on keywords in the question."""
+    """Return the single best tool for the question (legacy, use select_tools instead)."""
     if "length" in question.lower():
         return "get_length"
     if "upper" in question.lower():
@@ -85,12 +85,12 @@ def select_tool(question: str) -> str:
 
 
 def get_available_tools() -> list[ToolDef]:
-    """Return all registered tools."""
+    """Return all registered ToolDef objects."""
     return list(TOOLS_REGISTRY.values())
 
 
 def select_tools(question: str) -> list[str]:
-    """Select tools needed to answer the question based on keyword matching."""
+    """Return tool names that match keywords in the question."""
     tools: list[str] = []
     lower_q = question.lower()
 
@@ -112,7 +112,7 @@ def select_tools(question: str) -> list[str]:
 
 
 def format_tools() -> str:
-    """Format available tools with descriptions for display in prompts."""
+    """Return a formatted string of available tools for inclusion in prompts."""
     if not TOOLS_REGISTRY:
         return "No tools available."
     lines = ["Available tools:"]

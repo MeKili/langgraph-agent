@@ -21,7 +21,7 @@ from langgraph_agent.tools import (
 
 
 def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
-    """Generate and record a plan for the question using the LLM."""
+    """Use LLM to generate a plan and record it in steps."""
     tools_info = format_tools()
     prompt = f"{tools_info}\n\nPlan for: {state['question']}"
     plan_text = llm.generate(prompt)
@@ -29,7 +29,7 @@ def plan(state: AgentState, llm: LLMBase) -> dict[str, list[str]]:
 
 
 def act(state: AgentState) -> dict[str, list[str]]:
-    """Identify and record which tools are needed to answer the question."""
+    """Select tools for the question and record them in selected_tools."""
     selected = select_tools(state["question"])
     tools_str = ", ".join(selected) if selected else "none"
     return {
@@ -39,7 +39,7 @@ def act(state: AgentState) -> dict[str, list[str]]:
 
 
 def should_plan(state: AgentState) -> Literal["plan", "respond"]:
-    """Skip planning for very short questions; plan for those with keywords or length > 10."""
+    """Route to planning for complex questions (keywords or length > 10)."""
     q_lower = state["question"].lower()
     keywords = {"length", "upper", "lower", "word", "sentence", "count"}
     has_keyword = any(kw in q_lower for kw in keywords)
@@ -47,14 +47,14 @@ def should_plan(state: AgentState) -> Literal["plan", "respond"]:
 
 
 def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
-    """Route to tool execution only if tools are selected."""
+    """Route to tools if any were selected, else to respond."""
     if state["selected_tools"]:
         return "execute_tool"
     return "respond"
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Execute each selected tool with the question, recording results and errors."""
+    """Run each selected tool and record results (or errors)."""
     tool_names = state["selected_tools"]
     new_steps = state["steps"].copy()
     new_tool_results = state["tool_results"].copy()
@@ -79,7 +79,7 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
 
 
 def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int]:
-    """Generate a final answer using the LLM, incorporating history, steps, and tool results."""
+    """Use LLM to generate a final answer from context, update history and turn count."""
     context = f"{format_tools()}\n\n"
     if state["history"]:
         context += "Conversation history:\n"
@@ -104,7 +104,7 @@ def create_initial_state(
     question: str,
     history: list[Message] | None = None,
 ) -> AgentState:
-    """Create a fresh state for a question."""
+    """Create initial state for a new question (optionally with prior history)."""
     return {
         "question": question,
         "steps": [],
@@ -117,7 +117,7 @@ def create_initial_state(
 
 
 def build_graph(llm: LLMBase | None = None) -> Any:
-    """Build the agent graph; uses FakeLLM if none provided."""
+    """Build and compile the agent graph (uses FakeLLM by default)."""
     if llm is None:
         llm = FakeLLM()
 
