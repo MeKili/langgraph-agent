@@ -23,6 +23,7 @@ class AgentState(TypedDict):
         history: Previous conversation messages.
         turn_count: Total number of responses given.
         selected_tools: Tools identified for this question.
+        facts: Learned facts and information across turns.
     """
 
     question: str
@@ -32,3 +33,4 @@ class AgentState(TypedDict):
     history: list[Message]
     turn_count: int
     selected_tools: list[str]
+    facts: list[str]

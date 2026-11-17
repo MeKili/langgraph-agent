@@ -78,13 +78,18 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
     }
 
 
-def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int]:
+def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | int | list[str]]:
     """Use LLM to generate a final answer from context, update history and turn count."""
     context = f"{format_tools()}\n\n"
     if state["history"]:
         context += "Conversation history:\n"
         for msg in state["history"]:
             context += f"{msg['role']}: {msg['content']}\n"
+        context += "\n"
+    if state["facts"]:
+        context += "Known facts:\n"
+        for fact in state["facts"]:
+            context += f"- {fact}\n"
         context += "\n"
     context += f"Question: {state['question']}\n\nSteps taken:\n"
     for step in state["steps"]:
@@ -97,14 +102,23 @@ def respond(state: AgentState, llm: LLMBase) -> dict[str, str | list[Message] | 
     new_history = state["history"].copy()
     new_history.append({"role": "user", "content": state["question"]})
     new_history.append({"role": "assistant", "content": answer})
-    return {"answer": answer, "history": new_history, "turn_count": state["turn_count"] + 1}
+    new_facts = state["facts"].copy()
+    if state["tool_results"]:
+        new_facts.append(f"{state['question']}: {', '.join(state['tool_results'])}")
+    return {
+        "answer": answer,
+        "history": new_history,
+        "turn_count": state["turn_count"] + 1,
+        "facts": new_facts,
+    }
 
 
 def create_initial_state(
     question: str,
     history: list[Message] | None = None,
+    facts: list[str] | None = None,
 ) -> AgentState:
-    """Create initial state for a new question (optionally with prior history)."""
+    """Create initial state for a new question (optionally with prior history and facts)."""
     return {
         "question": question,
         "steps": [],
@@ -113,6 +127,7 @@ def create_initial_state(
         "history": history or [],
         "turn_count": len(history or []) // 2,
         "selected_tools": [],
+        "facts": facts or [],
     }
 
 
@@ -126,7 +141,9 @@ def build_graph(llm: LLMBase | None = None) -> Any:
     def plan_node(state: AgentState) -> dict[str, list[str]]:
         return plan(state, llm)
 
-    def respond_node(state: AgentState) -> dict[str, str | list[Message] | int]:
+    def respond_node(
+        state: AgentState,
+    ) -> dict[str, str | list[Message] | int | list[str]]:
         return respond(state, llm)
 
     graph = StateGraph(AgentState)

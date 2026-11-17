@@ -23,6 +23,7 @@ def test_graph_routes_to_tool_for_long_question() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -43,6 +44,7 @@ def test_graph_routes_to_respond_for_short_question() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -63,6 +65,7 @@ def test_graph_uses_fake_llm() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph(llm).invoke(initial)
 
@@ -102,6 +105,7 @@ def test_graph_uses_selected_tool() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -138,6 +142,7 @@ def test_graph_executes_multiple_tools() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -160,6 +165,7 @@ def test_graph_preserves_conversation_history() -> None:
         ],
         "turn_count": 1,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -185,6 +191,7 @@ def test_graph_routes_to_tool_for_keyword_match() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -202,6 +209,7 @@ def test_graph_routes_to_respond_for_short_simple_question() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -219,6 +227,7 @@ def test_act_node_records_selected_tools() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -264,6 +273,7 @@ def test_turn_count_increments_with_each_response() -> None:
         "history": history,
         "turn_count": 1,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
     assert result["turn_count"] == 2
@@ -285,6 +295,7 @@ def test_graph_routes_to_lowercase_tool() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -377,6 +388,7 @@ def test_graph_routes_to_sentence_tool() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -394,6 +406,7 @@ def test_selected_tools_populated_by_act_node() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -411,6 +424,7 @@ def test_router_uses_selected_tools_from_state() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
 
@@ -453,6 +467,7 @@ def test_router_sends_simple_question_directly_to_respond() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
     assert "plan:" not in " ".join(result["steps"])
@@ -470,7 +485,79 @@ def test_router_sends_complex_question_to_plan() -> None:
         "history": [],
         "turn_count": 0,
         "selected_tools": [],
+        "facts": [],
     }
     result = build_graph().invoke(initial)
     assert any("plan:" in step for step in result["steps"])
     assert result["answer"]
+
+
+def test_facts_field_initialized_empty() -> None:
+    """Test that facts field starts empty in initial state."""
+    state = create_initial_state("test question")
+    assert state["facts"] == []
+
+
+def test_facts_field_preserved_with_history() -> None:
+    """Test that facts field can be provided with history."""
+    history = [
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "hi"},
+    ]
+    facts = ["fact 1", "fact 2"]
+    state = create_initial_state("follow up", history, facts)
+    assert state["facts"] == ["fact 1", "fact 2"]
+    assert len(state["history"]) == 2
+
+
+def test_facts_field_updated_after_tool_execution() -> None:
+    """Test that facts are recorded after tool execution with results."""
+    initial: AgentState = {
+        "question": "what is the length of this text",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+        "facts": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert len(result["facts"]) > 0
+    assert any("length" in fact.lower() for fact in result["facts"])
+
+
+def test_facts_field_persists_across_turns() -> None:
+    """Test that facts are carried forward across multiple turns."""
+    initial: AgentState = {
+        "question": "what is the length of this text",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+        "facts": ["initial fact"],
+    }
+    result = build_graph().invoke(initial)
+
+    assert "initial fact" in result["facts"]
+    assert len(result["facts"]) > 1
+
+
+def test_facts_field_empty_without_tool_results() -> None:
+    """Test that facts remain empty when no tools are used."""
+    initial: AgentState = {
+        "question": "hi",
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": [],
+        "facts": [],
+    }
+    result = build_graph().invoke(initial)
+
+    assert result["facts"] == []
