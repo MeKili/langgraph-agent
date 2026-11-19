@@ -75,15 +75,6 @@ def register_tools() -> None:
     )
 
 
-def select_tool(question: str) -> str:
-    """Return the single best tool for the question (legacy, use select_tools instead)."""
-    if "length" in question.lower():
-        return "get_length"
-    if "upper" in question.lower():
-        return "uppercase"
-    return "count_words"
-
-
 def get_available_tools() -> list[ToolDef]:
     """Return all registered ToolDef objects."""
     return list(TOOLS_REGISTRY.values())

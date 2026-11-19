@@ -8,7 +8,6 @@ from langgraph_agent.tools import (
     format_tools,
     get_available_tools,
     lowercase,
-    select_tool,
     select_tools,
 )
 
@@ -71,21 +70,6 @@ def test_graph_uses_fake_llm() -> None:
 
     assert any("Strategic plan" in step for step in result["steps"])
     assert result["answer"]
-
-
-def test_tool_selection_for_length_query() -> None:
-    """Test that length queries select get_length tool."""
-    assert select_tool("what is the length of this") == "get_length"
-
-
-def test_tool_selection_for_uppercase_query() -> None:
-    """Test that uppercase queries select uppercase tool."""
-    assert select_tool("can you make this upper") == "uppercase"
-
-
-def test_tool_selection_defaults_to_count_words() -> None:
-    """Test that unknown queries default to count_words tool."""
-    assert select_tool("how many words here") == "count_words"
 
 
 def test_lowercase_tool() -> None:
