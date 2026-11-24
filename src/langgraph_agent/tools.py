@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -40,8 +41,6 @@ def count_words(text: str) -> int:
 
 def count_sentences(text: str) -> int:
     """Return number of sentences (split on .!? punctuation)."""
-    import re
-
     sentences = re.split(r"[.!?]+", text)
     return len([s.strip() for s in sentences if s.strip()])
 
