@@ -14,6 +14,7 @@ from langgraph_agent.llm import FakeLLM, LLMBase
 from langgraph_agent.state import AgentState, Message
 from langgraph_agent.tools import (
     TOOLS_REGISTRY,
+    extract_tool_input,
     format_tools,
     register_tools,
     select_tools,
@@ -54,7 +55,7 @@ def _should_use_tool(state: AgentState) -> Literal["execute_tool", "respond"]:
 
 
 def execute_tool(state: AgentState) -> dict[str, list[str]]:
-    """Run each selected tool and record results (or errors)."""
+    """Run each selected tool with extracted input and record results."""
     tool_names = state["selected_tools"]
     new_steps = state["steps"].copy()
     new_tool_results = state["tool_results"].copy()
@@ -65,7 +66,8 @@ def execute_tool(state: AgentState) -> dict[str, list[str]]:
                 result = f"tool: {tool_name} not found"
             else:
                 tool_def = TOOLS_REGISTRY[tool_name]
-                tool_output = tool_def.func(state["question"])
+                tool_input = extract_tool_input(state["question"], tool_name)
+                tool_output = tool_def.func(tool_input)
                 result = f"tool: {tool_name} returned {tool_output}"
         except Exception as e:
             result = f"tool: {tool_name} error - {type(e).__name__}"

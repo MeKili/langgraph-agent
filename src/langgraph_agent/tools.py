@@ -101,6 +101,26 @@ def select_tools(question: str) -> list[str]:
     return tools
 
 
+def extract_tool_input(question: str, tool_name: str) -> str:
+    """Extract the input text for a tool from a question.
+
+    Looks for quoted strings or follows common patterns like "tool the TEXT".
+    Falls back to the entire question if no extraction pattern matches.
+    """
+    # Try to extract quoted text
+    if '"' in question:
+        parts = question.split('"')
+        if len(parts) >= 3:
+            return parts[1]
+    if "'" in question:
+        parts = question.split("'")
+        if len(parts) >= 3:
+            return parts[1]
+
+    # Fallback: return the entire question
+    return question
+
+
 def format_tools() -> str:
     """Return a formatted string of available tools for inclusion in prompts."""
     if not TOOLS_REGISTRY:

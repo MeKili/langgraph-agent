@@ -5,6 +5,7 @@ from langgraph_agent.llm import FakeLLM
 from langgraph_agent.state import AgentState
 from langgraph_agent.tools import (
     count_sentences,
+    extract_tool_input,
     format_tools,
     get_available_tools,
     lowercase,
@@ -545,3 +546,46 @@ def test_facts_field_empty_without_tool_results() -> None:
     result = build_graph().invoke(initial)
 
     assert result["facts"] == []
+
+
+def test_extract_tool_input_with_double_quotes() -> None:
+    """Test that extract_tool_input extracts text from double quotes."""
+    text = extract_tool_input('uppercase "hello world"', "uppercase")
+    assert text == "hello world"
+
+
+def test_extract_tool_input_with_single_quotes() -> None:
+    """Test that extract_tool_input extracts text from single quotes."""
+    text = extract_tool_input("lowercase 'HELLO'", "lowercase")
+    assert text == "HELLO"
+
+
+def test_extract_tool_input_fallback_to_question() -> None:
+    """Test that extract_tool_input returns entire question if no quotes found."""
+    text = extract_tool_input("count words in this", "count_words")
+    assert text == "count words in this"
+
+
+def test_extract_tool_input_prefers_double_quotes() -> None:
+    """Test that extract_tool_input prefers double quotes over single when both present."""
+    text = extract_tool_input("uppercase \"first\" then 'second'", "uppercase")
+    assert text == "first"
+
+
+def test_tool_execution_uses_extracted_input() -> None:
+    """Test that tool execution extracts and uses input from question."""
+    initial: AgentState = {
+        "question": 'uppercase "hello"',
+        "steps": [],
+        "answer": "",
+        "tool_results": [],
+        "history": [],
+        "turn_count": 0,
+        "selected_tools": ["uppercase"],
+        "facts": [],
+    }
+    from langgraph_agent.graph import execute_tool
+
+    result = execute_tool(initial)
+
+    assert any("HELLO" in step for step in result["steps"])
